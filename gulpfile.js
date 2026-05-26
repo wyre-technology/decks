@@ -211,7 +211,16 @@ gulp.task('qunit', () => {
                 targetUrl: `http://${serverConfig.host}:${serverConfig.port}/${filename}`,
                 timeout: 20000,
                 redirectConsole: false,
-                puppeteerArgs: ['--allow-file-access-from-files']
+                // --no-sandbox / --disable-setuid-sandbox: Chrome's SUID
+                // sandbox cannot initialize on the CI runner (root-in-
+                // container) — puppeteer fails with "FATAL: No usable
+                // sandbox!" and the qunit suite never runs. This is the
+                // CI/headless TEST launch only (running the qunit test
+                // pages in ephemeral CI against local test content), NOT a
+                // production/runtime browser path — so disabling the
+                // sandbox here is the standard, scoped CI fix the error
+                // message itself recommends.
+                puppeteerArgs: ['--allow-file-access-from-files', '--no-sandbox', '--disable-setuid-sandbox']
             })
                 .then(result => {
                     if( result.stats.failed > 0 ) {
